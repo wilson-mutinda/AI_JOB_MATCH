@@ -15,6 +15,15 @@ gem 'google-id-token'
 # httparty
 gem 'httparty'
 
+# pdf-reader
+gem 'pdf-reader'
+
+# ruby-openai
+gem 'ruby-openai'
+
+# stringio
+gem 'stringio'
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.2", ">= 8.0.2.1"
 # Use postgresql as the database for Active Record

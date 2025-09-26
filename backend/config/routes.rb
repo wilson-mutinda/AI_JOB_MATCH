@@ -49,6 +49,8 @@ Rails.application.routes.draw do
       delete 'delete_application/:id', to: 'applications#delete_application'
 
       get 'candidate_applications', to: "applications#candidate_applications"
+
+      get 'tailored_resume/:id', to: 'applications#tailored_resume'
       
     end
   end

@@ -2,6 +2,10 @@ class Api::V1::ApplicationsController < ApplicationController
 
   before_action :get_candidate_id
 
+  require 'open-uri'
+  require 'pdf-reader'
+  require 'openai'
+
   # create_application
   def create_application
     begin
@@ -93,6 +97,29 @@ class Api::V1::ApplicationsController < ApplicationController
       else
         render json: { error: "Appliocation not found!" }, status: :not_found
       end
+    rescue => e
+      render json: { error: "Something went wrong!", message: e.message }, status: :internal_server_error
+    end
+    
+  end
+
+  # Generate tailored resume using AI
+  def tailored_resume
+    begin
+      application = Application.find_by(id: params[:id])
+      unless application
+        render json: { error: "Application not found!" }, status: :not_found
+        return
+      end
+
+      # extract cv text
+      cv_text = extract_text_from_cv(application)
+
+      job_title = application.job.title
+      job_description = application.job.description
+      tailored_resume = generate_tailored_resume(cv_text, job_title, job_description)
+
+      render json: { tailored_resume: tailored_resume }, status: :ok
     rescue => e
       render json: { error: "Something went wrong!", message: e.message }, status: :internal_server_error
     end
@@ -254,6 +281,73 @@ class Api::V1::ApplicationsController < ApplicationController
 
   # privately store application_params
   private
+
+  def generate_tailored_resume(cv_text, job_title, job_description)
+    return "⚠️ OpenAI API key not configured" unless ENV["OPENAI_API_KEY"].present?
+
+    client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+    retries = 0
+
+    begin
+      response = client.chat(
+        parameters: {
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You are an expert resume writer." },
+            { role: "user", content: "CV: #{cv_text}" },
+            { role: "user", content: "Job: #{job_title} - #{job_description}" }
+          ],
+          max_tokens: 800,
+          temperature: 0.7
+        }
+      )
+
+      response.dig("choices", 0, "message", "content") || "⚠️ Unexpected response format"
+
+    rescue OpenAI::Error => e
+      if e.message.include?("429") && retries < 3
+        retries += 1
+        sleep(2 ** retries) # exponential backoff (2s, 4s, 8s)
+        retry
+      else
+        "⚠️ Resume generation failed: #{e.message}"
+      end
+    rescue => e
+      "⚠️ Resume generation failed: #{e.message}"
+    end
+  end
+
+  def extract_text_from_cv(application)
+    begin
+      # Check if CV is attached
+      unless application.curriculum_vitae.attached?
+        return "No CV file attached to this application"
+      end
+
+      # Get the blob
+      blob = application.curriculum_vitae.blob
+      
+      # Check if it's a PDF
+      if blob.content_type == 'application/pdf'
+        # Download to temporary file
+        Tempfile.create(['cv', '.pdf'], binmode: true) do |file|
+          application.curriculum_vitae.download { |chunk| file.write(chunk) }
+          file.rewind
+          
+          reader = PDF::Reader.new(file.path)
+          text = reader.pages.map(&:text).join("\n")
+          return text.truncate(3000) # Limit text length
+        end
+      else
+        "File format not supported for text extraction. Please upload a PDF."
+      end
+    rescue PDF::Reader::MalformedPDFError
+      "⚠️ Could not read PDF (may be scanned or corrupted)"
+    rescue => e
+      Rails.logger.error "CV extraction error: #{e.message}"
+      "⚠️ Error reading CV: #{e.message}"
+    end
+  end
 
   def get_candidate_id
     request_header = request.headers['Authorization']
