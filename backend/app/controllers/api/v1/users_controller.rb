@@ -308,7 +308,9 @@ class Api::V1::UsersController < ApplicationController
             })
           else
             rendered_info = rendered_info.merge({
-              id: user.id
+              id: user.id,
+              email: user.email,
+              phone: user.phone
             })
           end
           access_token = JsonWebToken.encode_token(user.id, user.flag, 30.minutes.from_now)
