@@ -3,33 +3,57 @@
         <!-- right and left sections -->
          <div class="flex flex-col md:flex-row w-full h-screen gap-2">
             <!-- left section -->
-             <div class="md:w-[15%] bg-white p-4">
+             <div class="w-full md:w-[15%] bg-white p-4 fixed top-0 left-0 h-screen shadow-md">
                 <!-- buttons -->
                  <div class="space-y-8">
 
                     <!-- home butons -->
                      <div class="">
-                        <button type="button" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                        <router-link to="/admin-dashboard/home" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
                             <img src="/logo.png" alt="logo" width="30">
                             <span>Home</span>
-                        </button>
+                        </router-link>
                      </div>
 
                      <!-- recruiters -->
                       <div class="">
-                        <button type="button" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                        <router-link to="/admin-dashboard/recruiters" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
                             <img src="/recruiter.png" alt="recruiter" width="30">
                             <span>Recruiters</span>
-                        </button>
+                        </router-link>
                       </div>
 
                       <!-- candidates -->
                        <div class="">
-                        <button type="button" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                        <router-link to="/admin-dashboard/candidates" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
                             <img src="/candidate.png" alt="candidate" width="30">
                             <span>Candidates</span>
-                        </button>
+                        </router-link>
                        </div>
+
+                       <!-- jobs -->
+                        <div class="">
+                            <router-link to="/admin-dashboard/jobs" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                                <img src="/jobs.png" alt="jobs" width="30">
+                                <span>Jobs</span>
+                            </router-link>
+                        </div>
+
+                        <!-- applications -->
+                         <div class="">
+                            <router-link to="/admin-dashboard/applications" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                                <img src="/application.png" alt="application" width="30">
+                                <span>Applications</span>
+                            </router-link>
+                         </div>
+
+                         <!-- reports -->
+                          <div class="">
+                            <router-link to="/admin-dashboard/reports" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                                <img src="/report.png" alt="report" width="30">
+                                <span>Reports</span>
+                            </router-link>
+                          </div>
 
                      <!-- logout button -->
                       <div class="">
@@ -41,17 +65,36 @@
                  </div>
              </div>
              <!-- right section -->
-              <div class="md:w-[85%] p-2">
+              <div class="w-full md:w-[85%] p-2 md:ml-[15%] md:mt-20">
                 <!-- search bar and body -->
                  <div class="">
                     <!-- search bar -->
-                     <div class="">
+                     <div class="fixed top-0 right-0 z-50 md:w-[85%]">
                         <!-- search and user info -->
                          <div class="flex items-center justify-between bg-white p-4 rounded-md shadow-md">
-                            <!-- search bar -->
-                             <div class="flex rounded-md gap-2 ring-1 p-2 ring-gray-600 hover:ring-blue-600">
-                                <img src="/search.png" alt="search" width="30">
-                                <input class="bg-transparent outline-none" type="text" name="search" id="search">
+
+                            <!-- recruiters -->
+                            <div class="flex flex-col items-center bg-blue-50 px-4 py-2 rounded-lg">
+                                <h3 class="text-sm font-semibold text-gray-600">Recruiters</h3>
+                                <p class="text-xl font-bold text-blue-600">{{recruiters.length}}</p>
+                            </div>
+
+                            <!-- candidates -->
+                            <div class="flex flex-col items-center bg-green-50 px-4 py-2 rounded-lg">
+                                <h3 class="text-sm font-semibold text-gray-600">Candidates</h3>
+                                <p class=" text-xl font-bold text-green-600">{{ candidates.length }}</p>
+                            </div>
+
+                            <!-- jobs -->
+                            <div class="flex flex-col items-center bg-purple-50 px-4 py-2 rounded-lg">
+                                <h3 class="text-sm font-semibold text-gray-600">Jobs</h3>
+                                <span class="text-xl font-bold text-purple-600">3</span>
+                            </div>
+
+                            <!-- applications -->
+                             <div class="flex flex-col items-center bg-yellow-50 px-4 py-2 rounded-lg">
+                                <h3 class="text-sm font-semibold text-gray-600">Applications</h3>
+                                <span class="text-xl font-bold text-yellow-600">9</span>
                              </div>
                              <!-- user info -->
                               <div class="flex items-center gap-4 relative">
@@ -90,45 +133,7 @@
                      </div>
                      <!-- body -->
                       <div class="mt-4">
-                        <!-- recruiters and candidates -->
-                        <div class="flex items-center gap-4">
-                            <!-- recruiters -->
-                             <div class="bg-white w-full md:w-1/2 rounded-md p-2">
-                                <h3>Active Recruiters</h3>
-                                <table class="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th class="border p-2">#</th>
-                                            <th class="border p-2">Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(recruiter, index) in recruiters" :key="index">
-                                            <td class="border p-2">{{ index + 1 }}</td>
-                                            <td class="border p-2">{{ recruiter.email }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                             </div>
-                             <!-- candidates -->
-                              <div class="bg-white w-full md:w-1/2 p-2">
-                                <h3>Active Candidates</h3>
-                                <table class="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th class="border p-2">#</th>
-                                            <th class="border p-2">Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(candidate, index) in candidates" :key="index">
-                                            <td class="border p-2">{{ index + 1 }}</td>
-                                            <td class="border p-2">{{ candidate.email }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                              </div>
-                        </div>
+                        <router-view/>
                       </div>
                  </div>
               </div>
@@ -146,13 +151,20 @@ export default {
             flag: '',
             email: '',
             phone: '',
+            first_name: '',
+            last_name: '',
             id: '',
             showInfo: false,
+
+            searchQuery: '',
 
             errors: {},
 
             candidates: [],
             recruiters: [],
+
+            jobs: [],
+            applications: [],
         }
     },
 
@@ -193,9 +205,38 @@ export default {
             }
         },
 
+        async fetchApplications() {
+            try {
+                const response = await api.get('all_applications')
+                this.applications = response.data
+            } catch (error) {
+                if (error.response && error.response.data && error.response.data.errors) {
+                    this.errors = error.response.data.errors
+                } else {
+                    this.errors.general = "Something went wrong!"
+                }
+            }
+        },
+
+        async fetchJobs() {
+            try {
+                const response = await api.get('all_jobs')
+                this.jobs = response.data
+            } catch (error) {
+                if (error.response && error.response.data && error.response.data.errors) {
+                    this.errors = error.response.data.errors
+                } else {
+                    this.errors.general = "Something went wrong!"
+                }
+            }
+        }
+
     },
 
     mounted() {
+
+        this.fetchApplications();
+        this.fetchJobs();
 
         this.fetchRecruiters();
         this.fetchCandidates();
@@ -207,6 +248,16 @@ export default {
     },
 
     computed: {
+
+        filteredRecruiters(){
+            return this.recruiters.filter(recruiter => 
+                recruiter.email.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                recruiter.first_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                recruiter.last_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                recruiter.company.toLowerCase().includes(this.searchQuery.toLowerCase())
+            )
+        },
+
         formattedPhone() {
             if (this.phone && this.phone.startsWith("254")) {
                 return this.phone.replace(/^254/, "0")

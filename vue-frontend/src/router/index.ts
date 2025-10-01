@@ -8,6 +8,12 @@ import AdminDashboard from '@/components/pages/AdminDashboard.vue'
 import CandidateDashboard from '@/components/pages/CandidateDashboard.vue'
 import RecruiterDashboard from '@/components/pages/RecruiterDashboard.vue'
 import getUserRole from '@/services/auth'
+import AdminRecruiterPage from '@/components/pages/AdminRecruiterPage.vue'
+import AdminHomePage from '@/components/pages/AdminHomePage.vue'
+import AdminCandidatePage from '@/components/pages/AdminCandidatePage.vue'
+import AdminJobsPage from '@/components/pages/AdminJobsPage.vue'
+import AdminAplicationPage from '@/components/pages/AdminAplicationPage.vue'
+import AdminReportPage from '@/components/pages/AdminReportPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,7 +22,15 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginForm },
     { path: '/create-candidate', name: 'create-candidate', component: CandidateForm },
     { path: '/create-recruiter', name: 'create-recruiter', component: RecruiterForm },
-    { path: '/admin-dashboard', name: 'admin-dashboard', component: AdminDashboard },
+    { path: '/admin-dashboard', name: 'admin-dashboard', component: AdminDashboard, children: [
+      { path: '', redirect: '/admin-dashboard/home'},
+      { path: 'home', name: 'admin-home', component: AdminHomePage },
+      { path: 'recruiters', name: 'admin-recruiters', component: AdminRecruiterPage },
+      { path: 'candidates', name: 'admin-candidates', component: AdminCandidatePage },
+      { path: 'jobs', name: 'admin-jobs', component: AdminJobsPage },
+      { path: 'applications', name: 'admin-applications', component: AdminAplicationPage },
+      { path: 'reports', name: 'admin-reports', component: AdminReportPage },
+    ] },
     { path: '/candidate-dashboard', name: 'candidate-dashboard', component: CandidateDashboard },
     { path: '/recruiter-dashboard', name: 'recruiter-dashboard', component: RecruiterDashboard },
 
