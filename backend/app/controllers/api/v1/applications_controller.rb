@@ -1,10 +1,6 @@
 class Api::V1::ApplicationsController < ApplicationController
 
-  before_action :get_candidate_id
-
-  require 'open-uri'
-  require 'pdf-reader'
-  require 'openai'
+  before_action :get_candidate_id, except: [:all_applications]
 
   # create_application
   def create_application
@@ -127,6 +123,62 @@ class Api::V1::ApplicationsController < ApplicationController
   end
 
   # view all_applications
+  def all_my_applications
+    begin
+      applications = Application.all
+      if applications.empty?
+        render json: { error: "Empty List!" }, status: :not_found
+        return
+      else
+        info = applications.map do |application|
+
+          cv_url = url_for(application.curriculum_vitae)
+          job_title = application.job.title
+          job_description = application.job.description
+          job_recruiter_username = application.job.recruiter.username
+          job_recruiter_company = application.job.recruiter.company
+          job_recruiter_first_name = application.job.recruiter.first_name
+          job_recruiter_last_name = application.job.recruiter.last_name
+          job_recruiter_email = application.job.recruiter.user.email
+          job_recruiter_phone = application.job.recruiter.user.phone
+
+          job_candidate_first_name = application.candidate.first_name
+          job_candidate_last_name = application.candidate.last_name
+          job_candidate_username = application.candidate.username
+          job_candidate_date_of_birth = application.candidate.date_of_birth
+          job_candidate_email = application.candidate.user.email
+          job_candidate_phone = application.candidate.user.phone
+
+          application.as_json(except: [:created_at, :updated_at]).merge({
+
+            cv_url: cv_url,
+            job_title: job_title,
+            job_description: job_description,
+            job_recruiter_username: job_recruiter_username,
+            job_recruiter_company: job_recruiter_company,
+            job_recruiter_first_name: job_recruiter_first_name,
+            job_recruiter_last_name: job_recruiter_last_name,
+            job_recruiter_email: job_recruiter_email,
+            job_recruiter_phone: job_recruiter_phone,
+
+            job_candidate_first_name: job_candidate_first_name,
+            job_candidate_last_name: job_candidate_last_name,
+            job_candidate_username: job_candidate_username,
+            job_candidate_date_of_birth: job_candidate_date_of_birth,
+            job_candidate_email: job_candidate_email,
+            job_candidate_phone: job_candidate_phone
+
+          })
+        end
+        render json: info, status: :ok
+      end
+    rescue => e
+      render json: { error: "Something went wrong!", message: e.message }, status: :internal_server_error
+    end
+    
+  end
+
+  # view all_applications as an admin
   def all_applications
     begin
       applications = Application.all

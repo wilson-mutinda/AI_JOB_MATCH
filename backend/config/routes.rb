@@ -45,6 +45,7 @@ Rails.application.routes.draw do
       post 'create_application', to: 'applications#create_application'
       get 'single_application/:id', to: 'applications#single_application'
       get 'all_applications', to: 'applications#all_applications'
+      get 'all_my_applications', to: 'applications#all_my_applications'
       patch 'update_application/:id', to: 'applications#update_application'
       delete 'delete_application/:id', to: 'applications#delete_application'
 

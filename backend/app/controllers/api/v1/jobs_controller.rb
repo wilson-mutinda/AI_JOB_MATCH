@@ -92,7 +92,13 @@ class Api::V1::JobsController < ApplicationController
   def all_jobs
     begin
 
-      jobs = Job.where(recruiter_id: @recruiter_id)
+      if @flag == 'Admin'
+        jobs = Job.all
+      elsif (@flag == 'Recruiter')
+        jobs = Job.where(recruiter_id: @current_user.recruiter.id)
+      end
+
+      # jobs = Job.where(recruiter_id: @recruiter_id)
       
       if jobs.empty?
         render json: { error: "Empty List" }, status: :not_found
@@ -246,11 +252,19 @@ class Api::V1::JobsController < ApplicationController
         @user_id = decoded_token[:user_id]
         @current_user = User.find_by(id: @user_id)
 
-        if @current_user && @current_user.flag == 'Recruiter'
+        @flag = @current_user.flag
+
+        if @flag == 'Recruiter'
           @recruiter_id = @current_user.recruiter.id
-        else
-          render json: { error: "User not found!" }, status: :not_found
+        elsif @flag == 'Admin'
+          nil
         end
+
+        # if @current_user && @current_user.flag == 'Recruiter'
+        #   @recruiter_id = @current_user.recruiter.id
+        # else
+        #   render json: { error: "User not found!" }, status: :not_found
+        # end
       rescue
       end
       
