@@ -25,7 +25,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(recruiter, index) in filteredRecruiters" :key="index" class="hover:bg-blue-50 transition">
+                        <tr v-for="(recruiter, index) in showThreeRecruiters" :key="index" class="hover:bg-blue-50 transition">
                             <td class="border p-3">{{ index + 1 }}.</td>
                             <td class="border p-3 font-medium text-gray-800">{{ recruiter.first_name + ' ' + recruiter.last_name }}</td>
                             <td class="border p-3 text-gray-600">{{ recruiter.company }}</td>
@@ -33,8 +33,13 @@
                         <tr v-if="filteredRecruiters.length === 0">
                             <td colspan="3" class="p-6 text-center text-gray-500 italic bg-gray-50">No Matches</td>
                         </tr>
-                    </tbody>
+                    </tbody>                    
                 </table>
+
+                <!-- show more button -->
+                 <div class="text-center mt-3" v-if="filteredRecruiters.length > threeRecruiters">
+                    <button @click="showMoreRecruiters" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700 transition">Show more</button>
+                 </div>
                 </div>
 
                 <!-- candidates -->
@@ -54,19 +59,26 @@
                     <thead>
                         <tr class="bg-gray-100 text-gray-700">
                             <th class="border p-3">#</th>
+                            <th class="border p-3">Name</th>
                             <th class="border p-3">Email</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(candidate, index) in filterdCandidates" :key="index" class="hover:bg-green-50 transition">
+                        <tr v-for="(candidate, index) in showThreeCandidates" :key="index" class="hover:bg-green-50 transition">
                             <td class="border p-3">{{ index + 1 }}.</td>
-                            <td class="border p-3 font-medium text-gray-800">{{ candidate.email }}</td>
+                            <td class="border p-3 text-gray-800 font-medium">{{ candidate.first_name + ' ' + candidate.last_name }}</td>
+                            <td class="border p-3 text-gray-500">{{ candidate.email }}</td>
                         </tr>
                         <tr v-if="filterdCandidates.length === 0">
                             <td colspan="3" class="italic text-center text-gray-500 bg-gray-50 p-6">No Matches</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- show more button -->
+                 <div class="text-center mt-3" v-if="filterdCandidates.length > threeCandidates">
+                    <button @click="showMoreCandidates" class="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700 transition">Show more</button>
+                 </div>
                 </div>
         </div>
     </div>
@@ -82,7 +94,10 @@ export default {
             candidates: [],
             errors: {},
             recruiterSearch: '',
-            candidateSearch: ''
+            candidateSearch: '',
+
+            threeRecruiters: 3,
+            threeCandidates: 3,
         }
     },
 
@@ -114,6 +129,14 @@ export default {
             }
         },
 
+        showMoreRecruiters(){
+            this.threeRecruiters += 3
+        },
+
+        showMoreCandidates(){
+            this.threeCandidates += 3
+        }
+
     },
 
     mounted(){
@@ -138,7 +161,16 @@ export default {
                 candidate.first_name.toLowerCase().includes(this.candidateSearch.toLowerCase()) ||
                 candidate.last_name.toLowerCase().includes(this.candidateSearch.toLowerCase())
             )
-        }
+        },
+
+        showThreeRecruiters(){
+            return this.filteredRecruiters.slice(0, this.threeRecruiters);
+        },
+
+        showThreeCandidates(){
+            return this.filterdCandidates.slice(0, this.threeCandidates);
+        },
+
     }
 }
 </script>

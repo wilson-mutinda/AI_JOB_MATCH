@@ -3,7 +3,7 @@
         <!-- right and left sections -->
          <div class="flex flex-col md:flex-row w-full h-screen gap-2">
             <!-- left section -->
-             <div class="w-full md:w-[15%] bg-white p-4 fixed top-0 left-0 h-screen shadow-md">
+             <div class="w-full md:w-[15%] bg-white p-4 md:fixed top-0 left-0 h-screen shadow-md">
                 <!-- buttons -->
                  <div class="space-y-8">
 
@@ -15,13 +15,13 @@
                         </router-link>
                      </div>
 
-                     <!-- recruiters -->
-                      <div class="">
-                        <router-link to="/admin-dashboard/recruiters" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
+                    <!-- recruiters -->
+                    <div class="">
+                        <router-link to="/admin-dashboard/recruiters" :class="buttonActive ? 'bg-blue-300' : 'bg-blue-500'" class="bg-blue-500 rounded-md flex text-white items-center gap-2 text-lg p-2 hover:bg-blue-400 w-full">
                             <img src="/recruiter.png" alt="recruiter" width="30">
                             <span>Recruiters</span>
                         </router-link>
-                      </div>
+                    </div>
 
                       <!-- candidates -->
                        <div class="">
@@ -69,7 +69,7 @@
                 <!-- search bar and body -->
                  <div class="">
                     <!-- search bar -->
-                     <div class="fixed top-0 right-0 z-50 md:w-[85%]">
+                     <div class="md:fixed top-0 right-0 z-50 md:w-[85%]">
                         <!-- search and user info -->
                          <div class="flex items-center justify-between bg-white p-4 rounded-md shadow-md">
 
@@ -88,13 +88,13 @@
                             <!-- jobs -->
                             <div class="flex flex-col items-center bg-purple-50 px-4 py-2 rounded-lg">
                                 <h3 class="text-sm font-semibold text-gray-600">Jobs</h3>
-                                <span class="text-xl font-bold text-purple-600">3</span>
+                                <span class="text-xl font-bold text-purple-600">{{ jobs.length }}</span>
                             </div>
 
                             <!-- applications -->
                              <div class="flex flex-col items-center bg-yellow-50 px-4 py-2 rounded-lg">
                                 <h3 class="text-sm font-semibold text-gray-600">Applications</h3>
-                                <span class="text-xl font-bold text-yellow-600">9</span>
+                                <span class="text-xl font-bold text-yellow-600">{{ applications.length }}</span>
                              </div>
                              <!-- user info -->
                               <div class="flex items-center gap-4 relative">
@@ -163,12 +163,52 @@ export default {
             candidates: [],
             recruiters: [],
 
-            jobs: [],
             applications: [],
+            jobs: [],
+
+            activeButton: 'home'
         }
     },
 
     methods: {
+
+        setActive(buttonName){
+            this.activeButton = buttonName
+        },
+
+        getButtonClass(){
+            return [
+                'rounded-md flex items-center gap-2 text-lg p-2 w-full transition',
+                this.activeButton === buttonName ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ]
+        },
+
+        async fetchApplications(){
+            try {
+                const response = await api.get('all_applications');
+                this.applications = response.data
+            } catch (error) {
+                if (error.response && error.response.data && error.response.data.errors) {
+                    this.errors = error.response.data.errors
+                } else {
+                    this.errors.general = "Something went wrong!"
+                }
+            }
+        },
+
+        async fetchJobs(){
+            try {
+                const response = await api.get('all_jobs');
+                this.jobs = response.data
+            } catch (error) {
+                if (error.response && error.response.data && error.response.data.errors) {
+                    this.errors = error.response.data.errors
+                } else {
+                    this.errors.general = "Something went wrong!"
+                }
+            }
+        },
+
         logoutButton() {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
@@ -204,32 +244,6 @@ export default {
                 }
             }
         },
-
-        async fetchApplications() {
-            try {
-                const response = await api.get('all_applications')
-                this.applications = response.data
-            } catch (error) {
-                if (error.response && error.response.data && error.response.data.errors) {
-                    this.errors = error.response.data.errors
-                } else {
-                    this.errors.general = "Something went wrong!"
-                }
-            }
-        },
-
-        async fetchJobs() {
-            try {
-                const response = await api.get('all_jobs')
-                this.jobs = response.data
-            } catch (error) {
-                if (error.response && error.response.data && error.response.data.errors) {
-                    this.errors = error.response.data.errors
-                } else {
-                    this.errors.general = "Something went wrong!"
-                }
-            }
-        }
 
     },
 
