@@ -1,5 +1,8 @@
 class Api::V1::UsersController < ApplicationController
 
+  include RegexHelper
+  include SearchHelper
+
   # create_user
   def create_user
     begin
@@ -11,20 +14,13 @@ class Api::V1::UsersController < ApplicationController
         return
       else
         # email_format
-        email_format = /\A[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\z/i
-        unless email_param.match(email_format)
-          render json: { errors: {email: "Invalid email format!"}}, status: :unprocessable_entity
-          return
-        else
-          # email should not exist
-          email  = User.find_by(email: email_param)
-          if email
-            render json: { errors: { email: "Email Already exists!"}}, status: :unprocessable_entity
-            return
-          else
-            email_param = email_param.to_s.gsub(/\s+/, '').downcase
-          end
-        end
+        normalized_email = email_format(email_param)
+
+        # email should not exist
+        users = User.all.order(:email).to_a
+        email_search(users, normalized_email)
+
+        email_param = normalized_email
       end
 
       # phone_param
