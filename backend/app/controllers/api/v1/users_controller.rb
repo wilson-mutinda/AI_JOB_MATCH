@@ -2,6 +2,7 @@ class Api::V1::UsersController < ApplicationController
 
   include RegexHelper
   include SearchHelper
+  include SortHelper
 
   # create_user
   def create_user
@@ -52,36 +53,13 @@ class Api::V1::UsersController < ApplicationController
       password_param = user_params[:password]
       password_confirmation_param = user_params[:password_confirmation]
 
-      if password_param.present? || password_confirmation_param.present?
-        if !password_param && password_confirmation_param.present?
-          render json: { errors: { password: "Password is required!"}}, status: :unprocessable_entity
-          return
-        elsif password_param.present? && !password_confirmation_param
-          render json: { errors: { password_confirmation: "Password confirmation is required!"}}, status: :unprocessable_entity
-          return
-        end
-
-        # password_length
-        if password_param.length < 8
-          render json: { errors: { password: "Password should have at least 8 characters!"}}, status: :unprocessable_entity
-          return
-        end
-
-        # password_mismatch
-        if password_param.present? && password_confirmation_param.present? && password_param != password_confirmation_param
-          render json: { errors: { password_confirmation: "Password Mismatch!"}}, status: :unprocessable_entity
-          return
-        end
-
-        # password_format
-        unless password_param =~ /[A-Za-z]/ && password_param =~ /\d/
-          render json: { errors: { password: "Password must include both letters and numbers!"}}, status: :unprocessable_entity
-          return
-        end
-
-        password_param = password_param
-        password_confirmation_param = password_confirmation_param
+      conflict = password_regex(password_param, password_confirmation_param)
+      if conflict
+        render json: conflict, status: :unprocessable_entity
+        return
       end
+      password_param = password_param
+      password_confirmation_param = password_confirmation_param
 
       # create_user
       created_user = User.create(
@@ -106,7 +84,11 @@ class Api::V1::UsersController < ApplicationController
   # view single_user
   def single_user
     begin
-      user = User.find_by(id: params[:id])
+      users = User.all.order(:id).to_a
+      target_id = params[:id].to_i
+
+      user = binary_user_search(users, target_id)
+
       if user
         info = user.as_json(except: [:created_at, :updated_at, :password_digest])
         render json: info, status: :ok
@@ -122,12 +104,13 @@ class Api::V1::UsersController < ApplicationController
   # view all_users
   def all_users
     begin
-      users = User.all
-      if users.empty?
+      users = User.all.order(:email).to_a
+      sorted_array = sort_user_email(users)
+      if sorted_array.empty?
         render json: { error: "Empty List" }, status: :not_found
         return
       else
-        info = users.map do |user|
+        info = sorted_array.map do |user|
           user.as_json(except: [:created_at, :updated_at, :password_digest])
         end
         render json: info, status: :ok
@@ -141,7 +124,11 @@ class Api::V1::UsersController < ApplicationController
   # update_user
   def update_user
     begin
-      user = User.find_by(id: params[:id])
+      users = User.all.order(:id).to_a
+      target_id = params[:id].to_i
+
+      user = binary_user_search(users, target_id)
+
       if user
         user_info = {}
 
@@ -149,80 +136,55 @@ class Api::V1::UsersController < ApplicationController
         email_param = user_params[:email].to_s.gsub(/\s+/, '').downcase
         if email_param.present?
           # email_format
-          email_format = /\A[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\z/i
-          unless email_param.match(email_format)
-            render json: { errors: { email: "Invalid Email Format!"}},  status: :unprocessable_entity
+          normalized_email = email_format(email_param)
+
+          if normalized_email.is_a?(Hash) && normalized_email[:errors]
+            render json: normalized_email, status: :unprocessable_entity
             return
-          else
-            # email should not exist
-            existing_user = User.find_by(email: email_param)
-            if existing_user && existing_user.id != user.id
-              render json: { errors: { email: "Email Already Exists!"}}, status: :unprocessable_entity
-              return
-            end
           end
-          email_param = email_param.to_s.gsub(/\s+/, '').downcase
+
+          conflict = binary_email_search(User.all.order(:email).to_a, normalized_email, user.id)
+
+          if conflict
+            render json: conflict, status: :unprocessable_entity
+            return
+          end
+
+          email_param = normalized_email
           user_info[:email] = email_param
         end
 
         # phone_param
         phone_param = user_params[:phone].to_s.gsub(/\s+/, '')
         if phone_param.present?
+          normalized_phone = phone_format(phone_param)
 
-          # phone_format
-          phone_format = /\A(2541|2547)\d{8}\z/
-          unless phone_param.match(phone_format)
-            render json: { errors: { phone: "Invalid phone format!"}}, status: :unprocessable_entity
+          if normalized_phone.is_a?(Hash)
+            render json: normalized_phone, status: :unprocessable_entity
             return
           end
 
-          # phone should not exist
-          existing_user = User.find_by(phone: phone_param)
-          if existing_user && existing_user.id != user.id
-            render json: { errors: { phone: "User with the email already exists!"}}, status: :unprocessable_entity
+          conflict = binary_phone_search(User.all.order(:phone).to_a, normalized_phone, user.id)
+
+          if conflict
+            render json: conflict, status: :unprocessable_entity
             return
           end
 
-          phone_param = phone_param.to_s.gsub(/\s+/, '')
+          phone_param = normalized_phone
           user_info[:phone] = phone_param
+          
         end
 
         # password_param and password_confirmation_param
         password_param = user_params[:password]
         password_confirmation_param = user_params[:password_confirmation]
 
-        if password_param.present? || password_confirmation_param.present?
-          if !password_param && password_confirmation_param.present?
-            render json: { errors: { password: "Password is required!"}}, status: :unprocessable_entity
-            return
-          elsif password_param.present? && !password_confirmation_param
-            render json: { errors: { password_confirmation: "PAssword confiramtion is required!"}}, status: :unprocessable_entity
-            return
-          end
+        conflict = password_regex(password_param, password_confirmation_param)
 
-          # password mismatch
-          if password_param.present? && password_confirmation_param.present? && password_param != password_confirmation_param
-            render json: { errors: { password_confirmation: "Password Mismatch!"}}, status: :unprocessable_entity
-            return
-          end
-
-          # password length
-          if password_param.length < 8
-            render json: { errors: { password: "Password should have at least 8 characters!"}}, status: :unprocessable_entity
-            return
-          end
-
-          # both letters and numbers
-          unless password_param.match(/[A-Za-z]/) && password_param.match(/\d/)
-            render json: { errors: { password: "Password should have both letters and numbers!"}}, status: :unprocessable_entity
-            return
-          end
-
-          password_param = password_param
-          password_confirmation_param = password_confirmation_param
-
-          user_info[:password] = password_param
-          user_info[:password_confirmation] = password_confirmation_param
+        if conflict
+          render json: conflict, status: :unprocessable_entity
+          return
         end
 
         # update_user
@@ -247,7 +209,11 @@ class Api::V1::UsersController < ApplicationController
   # delete_user
   def delete_user
     begin
-      user = User.find_by(id: params[:id])
+      users = User.all.order(:id).to_a
+      target_id = params[:id].to_i
+
+      user = binary_user_search(users, target_id)
+
       if user
         user_email = user.email
         user.destroy
@@ -264,71 +230,74 @@ class Api::V1::UsersController < ApplicationController
   # user_login
   def user_login
     begin
+      users = User.all.order(:email).to_a
+
       email_param = params[:email].to_s.gsub(/\s+/, '').downcase
       password_param = params[:password]
 
-      if email_param.present? || password_param.present?
-        if !email_param && password_param.present?
-          render json: { errors: { email: "Email is required!"}}, status: :unprocessable_entity
-          return
-        elsif email_param.present? && !password_param
-          render json: { errors: { password: "PAssword is required!"}}, status: :unprocessable_entity
-          return
-        end
+      if email_param.present? && password_param.blank?
+        render json: { errors: { password: "Password is required!"}}, status: :unprocessable_entity
+        return
+      elsif email_param.blank? && password_param.present?
+        render json: { errors: { email: "Email is required!"}}, status: :unprocessable_entity
+        return
       end
-      user = User.find_by(email: email_param)
+
+      user = login_email_search(users, email_param)
       if user
-        auth = user.authenticate(password_param)
-        if auth
-          rendered_info = {}
 
-          flag = user.flag
-          if flag == 'Candidate'
-            rendered_info = rendered_info.merge({
-              id: user.candidate.id,
-              first_name: user.candidate.first_name,
-              last_name: user.candidate.last_name,
-              username: user.candidate.username,
-              date_of_birth: user.candidate.date_of_birth,
-              email: user.candidate.user.email,
-              phone: user.candidate.user.phone
-            })
-          elsif flag == 'Recruiter'
-            rendered_info = rendered_info.merge({
-              id: user.recruiter.id,
-              first_name: user.recruiter.first_name,
-              last_name: user.recruiter.last_name,
-              username: user.recruiter.username,
-              company: user.recruiter.company,
-              email: user.recruiter.user.email,
-              phone: user.recruiter.user.phone
-            })
-          else
-            rendered_info = rendered_info.merge({
-              id: user.id,
-              email: user.email,
-              phone: user.phone
-            })
-          end
-          access_token = JsonWebToken.encode_token(user.id, user.flag, 30.minutes.from_now)
-          refresh_token = JsonWebToken.encode_token(user.id, user.flag, 24.hours.from_now)
+        rendered_info = {}
+        flag = user.flag
 
+        access_token = JsonWebToken.encode_token(user.id, user.flag, 30.minutes.from_now)
+        refresh_token = JsonWebToken.encode_token(user.id, user.flag, 24.hours.from_now)
+
+        if flag == 'Admin'
+          rendered_info[:id] = user.id
+          rendered_info[:email] = user.email
+          rendered_info[:phone] = user.phone
+          rendered_info[:flag] = user.flag
           rendered_info[:access_token] = access_token
           rendered_info[:refresh_token] = refresh_token
-          rendered_info[:flag] = flag
 
+        elsif flag == 'Candidate'
+          rendered_info[:id] = user.candidate.user.id
+          rendered_info[:email] = user.candidate.user.email
+          rendered_info[:phone] = user.candidate.user.phone
+          rendered_info[:flag] = user.candidate.user.flag
+          rendered_info[:access_token] = access_token
+          rendered_info[:refresh_token] = refresh_token
+          rendered_info[:first_name] = user.candidate.first_name
+          rendered_info[:last_name] = user.candidate.last_name
+          rendered_info[:username] = user.candidate.username
+          rendered_info[:date_of_birth] = user.candidate.date_of_birth
+          
+        elsif flag == 'Recruiter'
+          rendered_info[:id] = user.recruiter.user.id
+          rendered_info[:email] = user.recruiter.user.email
+          rendered_info[:phone] = user.recruiter.user.phone
+          rendered_info[:flag] = user.recruiter.user.flag
+          rendered_info[:access_token] = access_token
+          rendered_info[:refresh_token] = refresh_token
+          rendered_info[:first_name] = user.recruiter.first_name
+          rendered_info[:last_name] = user.recruiter.last_name
+          rendered_info[:username] = user.recruiter.username
+          rendered_info[:company] = user.recruiter.company
+        end
+
+        auth = user.authenticate(password_param)
+        if auth
           # send email
           UserLogin.send_login_email(user)
-
           render json: rendered_info, status: :ok
         else
-          render json: { errors: { password: "Invalid password!"}}, status: :unprocessable_entity
+          render json: { errors: { password: "Invalid Password!"}}, status: :unprocessable_entity
           return
         end
       else
-        render json: { errors: { email: "Email not found!"}}, status: :not_found
+        render json: { error: "User not found!"}, status: :not_found
+        return
       end
-
     rescue => e
       render json: { error: "Something went wrong!", message: e.message }, status: :internal_server_error
     end

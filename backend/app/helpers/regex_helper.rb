@@ -39,7 +39,7 @@ module RegexHelper
     end
 
     if password != password_confirmation
-      return { errors: { password_confirmation: "PAssword mismatch!"} }
+      return { errors: { password_confirmation: "Password mismatch!"} }
     end
 
     # password_format
@@ -52,6 +52,7 @@ module RegexHelper
       return { errors: { password: "Password should have at least 8 characters!"} }
     end
 
-    { password: password, password_confirmation: password_confirmation}
+    # no error
+    nil
   end
 end
