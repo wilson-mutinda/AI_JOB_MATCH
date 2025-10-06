@@ -3,7 +3,7 @@ module RegexHelper
   def email_format(email)
     email = email.to_s.gsub(/\s+/, '').downcase
     unless email.match?(/\A[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\z/i)
-      raise 'Invalid Email Format!'
+      return { errors: { email: "Invalid Email Format!"}}
     end
     email
   end
@@ -18,9 +18,40 @@ module RegexHelper
     elsif phone.match?(/\A(2541|2547)\d{8}\z/)
       phone = phone
     else
-      raise 'Invalid Phone Format!'
+      return { errors: { phone: "Invalid Phone Format!"}}
     end
     phone
   end
 
+  # password_regex
+  def password_regex(password, password_confirmation)
+    password = password.to_s
+    password_confirmation = password_confirmation.to_s
+
+    if password.blank? || password_confirmation.blank?
+      return { errors: { password: "Password is required!", password_confirmation: "Password confirmation is required"}}
+    end
+
+    if password.present? && password_confirmation.blank?
+      return { errors: { password_confirmation: "password confirmation is required!"} }
+    elsif password.blank? && password_confirmation.present?
+      return { errors: { password: "Password is required!"} }
+    end
+
+    if password != password_confirmation
+      return { errors: { password_confirmation: "PAssword mismatch!"} }
+    end
+
+    # password_format
+    unless password.match?(/[A-Za-z]/) && password.match?(/\d/)
+      return { errors: { password: "Password should have both leters and digits"} }
+    end
+
+    # at leat 8 characters
+    unless password.length >= 8
+      return { errors: { password: "Password should have at least 8 characters!"} }
+    end
+
+    { password: password, password_confirmation: password_confirmation}
+  end
 end

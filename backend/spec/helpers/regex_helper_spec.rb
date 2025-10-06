@@ -8,11 +8,13 @@ RSpec.describe RegexHelper, type: :helper do
     end
 
     it "raises error when email is blank" do
-      expect { helper.email_format("") }.to raise_error("Invalid Email Format!")
+      result = helper.email_format("")
+      expect(result).to eq({ errors: { email: "Invalid Email Format!"}})
     end
 
     it "raises error when email is badly formatted" do
-      expect { helper.email_format("bad-email.com") }.to raise_error("Invalid Email Format!")
+      result = helper.email_format("bad-email.com")
+      expect(result).to eq({ errors: { email: "Invalid Email Format!"}})
     end
 
   end
@@ -23,12 +25,14 @@ RSpec.describe RegexHelper, type: :helper do
       expect(result).to eq("254100990099")
     end
 
-    it "returns an error if phpne is invalid" do
-      expect { helper.phone_format("254698989009") }.to raise_error("Invalid Phone Format!")
+    it "returns an error if phone is invalid" do
+      result = helper.phone_format("2546989898")
+      expect(result).to eq({ errors: { phone: "Invalid Phone Format!"}})
     end
 
     it "returns an error if phone is null" do
-      expect { helper.phone_format("") }.to raise_error("Invalid Phone Format!")
+      result = helper.phone_format("")
+      expect(result).to eq({ errors: { phone: "Invalid Phone Format!"}})
     end
 
     it "converts 01 prefix to 2541" do
@@ -42,7 +46,15 @@ RSpec.describe RegexHelper, type: :helper do
     end
 
     it "returns an error on non-digits" do
-      expect { helper.phone_format("0798i8u765") }.to raise_error("Invalid Phone Format!")
+      result = helper.phone_format("0798i8u765")
+      expect(result).to eq({ errors: { phone: "Invalid Phone Format!"}})
+    end
+  end
+
+  describe "#password_regex" do
+    it "returns an error if either password or password confirmation is missing" do
+      result = helper.password_regex("user1234", "")
+      expect(result).to eq({ errors: { password: "Password is required!", password_confirmation: "Password confirmation is required"}})
     end
   end
 end

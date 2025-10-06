@@ -18,7 +18,11 @@ class Api::V1::UsersController < ApplicationController
 
         # email should not exist
         users = User.all.order(:email).to_a
-        email_search(users, normalized_email)
+        conflict = email_search(users, normalized_email)
+        if conflict
+          render json: conflict, status: :unprocessable_entity
+          return
+        end
 
         email_param = normalized_email
       end
@@ -30,20 +34,17 @@ class Api::V1::UsersController < ApplicationController
         return
       else
         # phone_format
-        phone_format = /\A(2541|2547)\d{8}\z/
-        unless phone_param.match(phone_format)
-          render json: { errors: { phone: "Invalid phone format!"}}, status: :unprocessable_entity
+        normalized_phone = phone_format(phone_param)
+        
+        # email should not exist
+        users = User.all.order(:phone).to_a
+        conflict = phone_search(users, normalized_phone)
+        if conflict
+          render json: conflict, status: :unprocessable_entity
           return
-        else
-          # phone should not exist
-          phone = User.find_by(phone: phone_param)
-          if phone
-            render json: { errors: { phone: "Phone already taken!"}}, status: :unprocessable_entity
-          return
-          end
         end
 
-        phone_param = phone_param.to_s.gsub(/\s+/, '')
+        phone_param = normalized_phone
         
       end
 
