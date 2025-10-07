@@ -138,7 +138,6 @@ export default {
         },
 
         async userLogin() {
-
             this.errors = {};
 
             try {
@@ -148,57 +147,60 @@ export default {
                 };
     
                 const response = await api.post('user_login', payload);
+                
+                const flag = response.data.flag.toLowerCase()
+                const email = response.data.email
+                const id = response.data.id
+                const phone = response.data.phone
 
                 const access_token = response.data.access_token
                 const refresh_token = response.data.refresh_token
-                const flag = response.data.flag
-                const id = response.data.id
 
                 const first_name = response.data.first_name
                 const last_name = response.data.last_name
                 const username = response.data.username
-                const email = response.data.email
-                const phone = response.data.phone
                 const company = response.data.company
                 const date_of_birth = response.data.date_of_birth
 
-                localStorage.setItem('access_token', access_token);
-                localStorage.setItem('refresh_token', refresh_token);
-                localStorage.setItem('flag', flag);
-                localStorage.setItem('id', id);
+                localStorage.setItem("flag", flag)
+                localStorage.setItem("email", email)
+                localStorage.setItem("id", id)
+                localStorage.setItem("phone", phone)
+
+                localStorage.setItem("access_token", access_token)
+                localStorage.setItem("refresh_token", refresh_token)
 
                 if (first_name) {
-                    localStorage.setItem('first_name', first_name);
+                    localStorage.setItem("first_name", first_name)
                 }
+
                 if (last_name) {
-                    localStorage.setItem('last_name', last_name);
+                    localStorage.setItem("last_name", last_name)
                 }
+
                 if (username) {
-                    localStorage.setItem('username', username);
+                    localStorage.setItem("username", username)
                 }
-                if (email) {
-                    localStorage.setItem('email', email);
-                }
-                if (phone) {
-                    localStorage.setItem('phone', phone);
-                }
+
                 if (company) {
-                    localStorage.setItem('company', company)
+                    localStorage.setItem("company", company)
                 }
+
                 if (date_of_birth) {
-                    localStorage.setItem('date_of_birth', date_of_birth)
+                    localStorage.setItem("date_of_birth", date_of_birth)
                 }
 
-                console.log('Login Successful')
-
-                // redirect to dashboard
-                if (flag == 'Recruiter') {
-                    router.push('/recruiter-dashboard')
-                } else if (flag == 'Candidate') {
-                    router.push('/candidate-dashboard')
+                if (flag == 'admin') {
+                    console.log("Flag:", flag)
+                    console.log("Redirecting to:", `/${flag}-dashboard`)
+                    router.push(`/${flag}-dashboard`)
+                } else if (flag == 'recruiter') {
+                    router.push(`/${flag}-dashboard`)
                 } else {
-                    router.push('/admin-dashboard')
+                    router.push(`/${flag}-dashboard`)
                 }
+
+                console.log("Login Successful!");
 
                 this.clearLoginForm();
                 this.errors = {};
@@ -206,10 +208,8 @@ export default {
             } catch (error) {
                 if (error.response && error.response.data && error.response.data.errors) {
                     this.errors = error.response.data.errors
-                } else if (error.response.data.error) {
-                    this.errors.general = error.response.data.error;
                 } else {
-                    this.errors.general = "Network Error. Please try later!";
+                    this.errors.general = "Something went wrong!"
                 }
             }
         },

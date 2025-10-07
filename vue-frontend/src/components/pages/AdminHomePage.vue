@@ -86,6 +86,7 @@
 
 <script>
 import api from '@/services/api';
+import quickSort from '@/services/sort';
 
 export default {
     data() {
@@ -106,7 +107,7 @@ export default {
         async fetchCandidates() {
             try {
                 const response = await api.get('all_candidates')
-                this.candidates = response.data
+                this.candidates = quickSort(response.data)
             } catch (error) {
                 if (error.response && error.response.data && error.response.data.errors) {
                     this.errors = error.response.data.errors
